@@ -1,4 +1,5 @@
 import "./style.scss"
+import React, { useEffect, useRef } from "react";
 // import * as mobilenet from '@tensorflow-models/mobilenet';
 // import * as knnClassifier from '@tensorflow-models/knn-classifier';
 // import { Howl } from 'howler';
@@ -11,9 +12,50 @@ import "./style.scss"
 // sound.play();
 
 function App() {
+  const video = useRef()
+
+   //Hàm setup camera
+   const init = async () => {
+      await setupCamera()
+   }
+
+   const setupCamera = () => {
+    return new Promise ((resolve, reject) => {
+      navigator.getUserMedia = navigator.getUserMedia ||
+      navigator.webkitGetUserMedia ||
+      navigator.mozGetUserMedia ||
+      navigator.msGetUserMedia
+
+      if (navigator.getUserMedia) {
+        navigator.getUserMedia(
+          { video: true},
+          stream => {
+            video.current.srcObject = stream;
+            video.current.addEventListener('loadeddata', resolve)
+          },
+          error => reject(error)
+        );
+      } else {
+        reject()
+      }
+    })
+   }
+
+   useEffect ( () => {
+    init ();
+
+    //Cleanup
+    return () => {
+
+    }
+   }, [])
+
+
+
   return (
     <div className="main">
       <video 
+      ref={video}
       className='video'
       autoPlay
       />
