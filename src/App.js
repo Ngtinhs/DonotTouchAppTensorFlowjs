@@ -1,17 +1,18 @@
 import "./style.scss"
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { initNotifications , notify} from "@mycv/f8-notification";
 import '@tensorflow/tfjs-backend-cpu';
 import '@tensorflow/tfjs-backend-webgl';
 import * as mobilenet from '@tensorflow-models/mobilenet';
 import * as knnClassifier from '@tensorflow-models/knn-classifier';
-// import { Howl } from 'howler';
-// import soundURL from './assets/dm.mp3'
+import { Howl } from 'howler';
+import soundURL from './assets/dm.mp3'
 
-// var sound = new Howl({
-//   src: [soundURL]
-// });
+var sound = new Howl({
+  src: [soundURL]
+});
 
-// sound.play();
+
 const NOT_TOUCH_LABEL = 'not_touch'
 const TOUCHED_LABEL = 'touched'
 const TRAINING_TIMES = 50;
@@ -20,6 +21,8 @@ function App() {
   const video = useRef()
   const classifier = useRef()
   const mobilenetModule = useRef()
+  const canPlaySound = useRef(true);
+  const [touched, setTouched] = useState(false)
 
    //Hàm setup camera
    const init = async () => {
@@ -31,6 +34,8 @@ function App() {
 
       console.log('setup done');
       console.log('khong cham tay len mat va bam train 1');
+
+      initNotifications ({ cooldown: 3000 })
 
    }
 
@@ -102,8 +107,15 @@ function App() {
    if (result.label === TOUCHED_LABEL
     && result.confidences[result.label] > TOUCHED_CONFIDENCE) {
       console.log('Touched');
+      if (canPlaySound.current) {
+        canPlaySound.current = false
+        sound.play();
+      }
+      notify ('Bỏ tay ra', { body: 'Bạn vừa chạm tay vào mặt,'})
+      setTouched(true)
    } else {
     console.log('Not_touched');
+    setTouched(false)
    }
 
    await sleep(200);
@@ -115,6 +127,10 @@ function App() {
    }
    useEffect ( () => {
     init ();
+    sound.on ('end', function (){
+      canPlaySound.current = true
+    })
+
 
     //Cleanup
     return () => {
@@ -125,7 +141,7 @@ function App() {
 
 
   return (
-    <div className="main">
+    <div className={`main ${touched ? 'touched' : ''}`}>
       <video 
       ref={video}
       className='video'
